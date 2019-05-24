@@ -41,13 +41,16 @@
 
 #ifdef MASTER
 #define USART_MASTERSLAVE_TX_BYTES 10  // Transmit byte count including start '/' and stop character '\n'
-#define USART_MASTERSLAVE_RX_BYTES 5   // Receive byte count including start '/' and stop character '\n'
+#define USART_MASTERSLAVE_RX_BYTES 13  // Receive byte count including start '/' and stop character '\n'
 
 // Variables which will be written by slave frame
 extern FlagStatus beepsBackwards;
+uint8_t realSpeedSlave[4];
+uint8_t currentDCSlave[4];
+uint8_t buffer[USART_MASTERSLAVE_TX_BYTES];
 #endif
 #ifdef SLAVE
-#define USART_MASTERSLAVE_TX_BYTES 5   // Transmit byte count including start '/' and stop character '\n'
+#define USART_MASTERSLAVE_TX_BYTES 13  // Transmit byte count including start '/' and stop character '\n'
 #define USART_MASTERSLAVE_RX_BYTES 10  // Receive byte count including start '/' and stop character '\n'
 
 // Variables which will be send to master
@@ -59,7 +62,16 @@ FlagStatus beepsBackwardsMaster = RESET;
 // Variables which will be written by master frame
 int16_t currentDCMaster = 0;
 int16_t batteryMaster = 0;
-int16_t realSpeedMaster = 0;
+int16_t realSpeedMaster = 0;	
+
+int16_t pwmSlaveControl = 0;
+int16_t pwmSlave = 0;
+
+uint8_t slaveSendIdentifier = 0;
+
+extern float currentDC;
+extern float realSpeed;
+extern uint8_t dir;
 
 void CheckGeneralValue(uint8_t identifier, int16_t value);
 #endif
@@ -107,15 +119,9 @@ void UpdateUSARTMasterSlaveInput(void)
 // Check USART master slave input
 //----------------------------------------------------------------------------
 void CheckUSARTMasterSlaveInput(uint8_t USARTBuffer[])
-{
+{	
 #ifdef MASTER
-	// Result variables
-	FlagStatus upperLED = RESET;
-	FlagStatus lowerLED = RESET;
-	FlagStatus mosfetOut = RESET;
-	
-	// Auxiliary variables
-	uint8_t byte;
+	int i = 0;
 #endif
 #ifdef SLAVE
 	// Result variables
@@ -123,6 +129,8 @@ void CheckUSARTMasterSlaveInput(uint8_t USARTBuffer[])
 	FlagStatus enable = RESET;
 	FlagStatus shutoff = RESET;
 	FlagStatus chargeStateLowActive = SET;
+	
+	float temp_realSpeed;
 	
 	// Auxiliary variables
 	uint8_t identifier = 0;
@@ -150,26 +158,22 @@ void CheckUSARTMasterSlaveInput(uint8_t USARTBuffer[])
 	}
 	
 #ifdef MASTER
-	// Calculate setvalues for LED and mosfets
-	byte = USARTBuffer[1];
+
+	while (i<4) {
+		realSpeedSlave[3-i] = USARTBuffer[2+i];
+		i++;
+	}
 	
-	//none = (byte & BIT(7)) ? SET : RESET;
-	//none = (byte & BIT(6)) ? SET : RESET;
-	//none = (byte & BIT(5)) ? SET : RESET;
-	//none = (byte & BIT(4)) ? SET : RESET;
-	beepsBackwards = (byte & BIT(3)) ? SET : RESET;
-	mosfetOut = (byte & BIT(2)) ? SET : RESET;
-	lowerLED = (byte & BIT(1)) ? SET : RESET;
-	upperLED = (byte & BIT(0)) ? SET : RESET;
+	i=0;
+	while (i<4) {
+		currentDCSlave[3-i] = USARTBuffer[6+i];
+		i++;
+	}
 	
-	// Set functions according to the variables
-	gpio_bit_write(MOSFET_OUT_PORT, MOSFET_OUT_PIN, mosfetOut);
-	gpio_bit_write(UPPER_LED_PORT, UPPER_LED_PIN, upperLED);
-	gpio_bit_write(LOWER_LED_PORT, LOWER_LED_PIN, lowerLED);
 #endif
 #ifdef SLAVE
 	// Calculate result pwm value -1000 to 1000
-	pwmSlave = (int16_t)((USARTBuffer[1] << 8) | USARTBuffer[2]);
+	pwmSlaveControl = (int16_t)((USARTBuffer[1] << 8) | USARTBuffer[2]);
 	
 	// Get identifier
 	identifier = USARTBuffer[3];
@@ -210,6 +214,21 @@ void CheckUSARTMasterSlaveInput(uint8_t USARTBuffer[])
 	gpio_bit_write(LED_GREEN_PORT, LED_GREEN, chargeStateLowActive == SET ? SET : RESET);
 	gpio_bit_write(LED_RED_PORT, LED_RED, chargeStateLowActive == RESET ? SET : RESET);
 	SetEnable(enable);
+	
+	switch (dir)
+	{
+		case 1:
+			temp_realSpeed = -realSpeed;
+			break;
+		case 2:
+			temp_realSpeed = realSpeed;
+			break;
+		default:
+			temp_realSpeed = 0;
+		break;			
+	}
+	
+	pwmSlave = CalculatePIDPWM(temp_realSpeed, pwmSlaveControl);
 	SetPWM(pwmSlave);
 	CheckGeneralValue(identifier, value);
 	
@@ -229,7 +248,7 @@ void SendSlave(int16_t pwmSlave, FlagStatus enable, FlagStatus shutoff, FlagStat
 {
 	uint8_t index = 0;
 	uint16_t crc = 0;
-	uint8_t buffer[USART_MASTERSLAVE_TX_BYTES];
+	//uint8_t buffer[USART_MASTERSLAVE_TX_BYTES];
 	
 	// Format pwmValue and general value
 	int16_t sendPwm = CLAMP(pwmSlave, -1000, 1000);
@@ -275,8 +294,12 @@ void SendMaster(FlagStatus upperLEDMaster, FlagStatus lowerLEDMaster, FlagStatus
 	uint8_t index = 0;
 	uint16_t crc = 0;
 	uint8_t buffer[USART_MASTERSLAVE_TX_BYTES];
-	
 	uint8_t sendByte = 0;
+	FLOATUNION_t speed;
+	FLOATUNION_t current;
+	speed.number = dir < 2 ? realSpeed : -realSpeed;
+	current.number = currentDC;
+
 	sendByte |= (0 << 7);
 	sendByte |= (0 << 6);
 	sendByte |= (0 << 5);
@@ -289,7 +312,14 @@ void SendMaster(FlagStatus upperLEDMaster, FlagStatus lowerLEDMaster, FlagStatus
 	// Send answer
 	buffer[index++] = '/';
 	buffer[index++] = sendByte;
-	
+	buffer[index++] = speed.bytes[3];
+	buffer[index++] = speed.bytes[2];
+	buffer[index++] = speed.bytes[1];
+	buffer[index++] = speed.bytes[0];
+	buffer[index++] = current.bytes[3];
+	buffer[index++] = current.bytes[2];
+	buffer[index++] = current.bytes[1];
+	buffer[index++] = current.bytes[0];	
 	// Calculate CRC
   crc = CalcCRC(buffer, index);
   buffer[index++] = (crc >> 8) & 0xFF;
