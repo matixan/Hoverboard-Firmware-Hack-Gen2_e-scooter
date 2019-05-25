@@ -9,7 +9,7 @@ To control the hoverboard drivers, a development board, like for example an Ardu
 
 Data can be read out either by using the master controller or the slave controller. When using the master controller, 24 bytes of data containing the battery voltage and master and slave speeds and currents can just be read out. Each value is in a float format split up into 4 bytes. This can be converted using the `FLOATUNION_t` typedef. When using the slave controller, data first has to be requested before it is send. It is also possible to change certain settings on the hoverboard controllers like for example enabling or disabling the beeping when driving backwards. To read out data you have to set the readWrite field to '0' and to change settings you have to set it to '1'. Notice that for every data send in the slave controller you have to use ASCII character instead of real numbers. You can chose which data has to send back or which value in the hoverboard has to be changed by sending the correct identifier. The list with the correct identifiers can be found for reading in the first switch statement and for writing in the second switch statement in the source file `HoverBoardGigaDevice/src/commsBluetooth.c`. 
 
-All communications happens using a baudrate of 19200. The main controller has to receive data at least every 2000 milliseconds before it emergency shuts off. 
+All communications happen using a baudrate of 19200. The main controller has to receive data at least every 2000 milliseconds before it emergency shuts off. 
 
 __________________________________________
 
