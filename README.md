@@ -5,18 +5,11 @@ This fork of Hoverboard Firmware Generation 2 for generic hoverboards using two 
 - All important data is now send to the steering devices (battery voltage, master and slave current and master and slave realSpeed)
 ````
 
-To control the hoverboard drivers, a development board, like for example an Arduino (3.3V logic levels!!!) has to be connected to the master controller using a UART port. It's recommended to have a board with multiple UART ports like for example the Arduino Due (connected directly) or Arduino Mega (using logic level converters). Check out the reversed-engineered schematics for "REMOTE" down below. The overview of all communications can be found in `CommunicationOverview.ods`.  
-The function for generating the 16 bit CRC check can be found in `HoverBoardGigaDevice/src/comms.c`. The typedef `FLOATUNION_t` in C for converting seperate float bytes to a float variable can be found in `HoverBoardGigaDevice/inc/defines.h`. 
+To control the hoverboard drivers, a development board, like for example an Arduino (3.3V logic levels!!!) has to be connected to the master controller using a UART port. It's recommended to have a board with multiple UART ports like for example the Arduino Due (connected directly) or Arduino Mega (using logic level converters). Check out the reversed-engineered schematics for "REMOTE" down below. The overview of all communications can be found in `CommunicationOverview.ods`. The function for generating the 16 bit CRC check can be found in `HoverBoardGigaDevice/src/comms.c`. The typedef `FLOATUNION_t` in C for converting seperate float bytes to a float variable can be found in `HoverBoardGigaDevice/inc/defines.h`. 
 
 Data can be read out either by using the master controller or the slave controller. When using the master controller, 24 bytes of data containing the battery voltage and master and slave speeds and currents can just be read out. Each value is in a float format split up into 4 bytes. This can be converted using the `FLOATUNION_t` typedef. When using the slave controller, data first has to be requested before it is send. It is also possible to change certain settings on the hoverboard controllers like for example enabling or disabling the beeping when driving backwards. To read out data you have to set the readWrite field to '0' and to change settings you have to set it to '1'. Notice that for every data send in the slave controller you have to use ASCII character instead of real numbers. You can chose which data has to send back or which value in the hoverboard has to be changed by sending the correct identifier. The list with the correct identifiers can be found for reading in the first switch statement and for writing in the second switch statement in the source file `HoverBoardGigaDevice/src/commsBluetooth.c`.   
 
 __________________________________________
-
-#### Updates:
-````
-- Firmware is ready.
-- Sadly I can not support any issues. I'm not a student, less free time :)
-````
 
 ### Hoverboard-Firmware-Hack-Gen2
 
