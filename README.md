@@ -1,3 +1,18 @@
+This fork of Hoverboard Firmware Generation 2 for generic hoverboards using two mainboards has the following changes compared to the original firmware:
+````
+- Seperate control of each motor
+- Added PID controllers allowing for each motor to be controlled using a real speed instead of a power level (P, I and D gains still have to be tweaked better, power buildup at lower speeds is pretty slow)
+- All important data is now send to the steering devices (battery voltage, master and slave current and master and slave realSpeed)
+````
+
+To control the hoverboard drivers, a development board, like for example an Arduino (3.3V logic levels!!!) has to be connected to the master controller using a UART port. It's recommended to have a board with multiple UART ports like for example the Arduino Due (connected directly) or Arduino Mega (using logic level converters). Check out the reversed-engineered schematics for "REMOTE" down below. 
+
+The steering signal consists out of 8 bytes and is as follows seperated by colons: '/', <leftSpeed_MSbyte>, <leftSpeed_LSbyte>, <rightSpeed_MSbyte>, <rightSpeed_LSbyte>, <CRC_MSbyte>, <CRC_LSbyte>, '\n'. LeftSpeed and rightSpeed are 16 bit signed integer values and the function for generating the 16 bit CRC can be found in HoverBoardGigaDevice/src/comms.c.
+
+The data the master controller sends consists out 24 bytes and is as follows seperated by colons: '/', <batteryVoltage_byte1>, <batteryVoltage_byte2>, <batteryVoltage_byte3>, <batteryVoltage_byte4>, <currentMaster_byte1>, <currentMaster_byte2>, <currentMaster_byte3>, <currentMaster_byte4>, <speedMaster_byte1>, <speedMaster_byte2>, <speedMaster_byte3>, <speedMaster_byte4>, <currentSlave_byte1>, <currentSlave_byte2>, <currentSlave_byte3>, <currentSlave_byte4>, <speedSlave_byte1>, <speedSlave_byte2>, <speedSlave_byte3>, <speedSlave_byte4>, <CRC_MSbyte>, <CRC_LSbyte>, '\n'. BatteryVoltage, currentMaster, speedMaster, currentSlave and speedSlave are 4 byte float values. The typedef (FLOATUNION_t) in C for converting these bytes to float variables can be found in HoverBoardGigaDevice/inc/defines.h. 
+
+It is also possible to retrieve the same data from the slave controller but only with one value at a time. Some settings can also be changed this way like for example enabling or disabling the beeping when driving backwards or changing the LED colors or blinking speed.  
+
 #### Updates:
 ````
 - Firmware is ready.
