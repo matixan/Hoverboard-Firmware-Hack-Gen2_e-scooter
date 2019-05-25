@@ -192,8 +192,8 @@ void CheckUSARTBluetoothInput(uint8_t USARTBuffer[])
 	{
 		// Calculate result value (-10000 to 10000)
 		sign = USARTBuffer[4] == '-' ? -1 : 1;
-		digit1 = (USARTBuffer[5] - '0') * 10000;
-		digit2 = (USARTBuffer[6] - '0') * 1000;
+		//digit1 = (USARTBuffer[5] - '0') * 10000;
+		//digit2 = (USARTBuffer[6] - '0') * 1000;
 		digit3 = (USARTBuffer[7] - '0') * 100;
 		digit4 = (USARTBuffer[8] - '0') * 10;
 		digit5 = (USARTBuffer[9] - '0');
