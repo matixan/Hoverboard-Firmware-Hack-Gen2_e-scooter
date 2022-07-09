@@ -32,6 +32,7 @@
 #include "../Inc/setup.h"
 #include "../Inc/defines.h"
 #include "../Inc/config.h"
+#include "../Inc/bldc.h"
 
 // Internal constants
 const int16_t pwm_res = 72000000 / 2 / PWM_FREQ; // = 2000
@@ -40,6 +41,7 @@ const int16_t pwm_res = 72000000 / 2 / PWM_FREQ; // = 2000
 float batteryVoltage = 40.0;
 float currentDC = 0.0;
 float realSpeed = 0.0;
+uint8_t dir; 
 
 // Timeoutvariable set by timeout timer
 extern FlagStatus timedOut;
@@ -205,6 +207,22 @@ void CalculateBLDC(void)
 	// Determine current position based on hall sensors
   hall = hall_a * 1 + hall_b * 2 + hall_c * 4;
   pos = hall_to_pos[hall];
+	if (pos == 6 && lastPos == 1) 
+	{
+		dir = 2;
+	}
+	else if (pos == 1 && lastPos == 6) 
+	{
+		dir = 1;
+	}
+	else if (pos < lastPos) 
+	{
+		dir = 2;
+	}
+	else if (pos > lastPos) 
+	{
+			dir = 1;
+	}
 	
 	// Calculate low-pass filter for pwm value
 	filter_reg = filter_reg - (filter_reg >> FILTER_SHIFT) + bldc_inputFilterPwm;

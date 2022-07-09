@@ -40,6 +40,7 @@
 #include "../Inc/commsMasterSlave.h"
 #include "../Inc/commsSteering.h"
 #include "../Inc/commsBluetooth.h"
+#include "../Inc/comms.h"
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
@@ -47,10 +48,12 @@
 #include "arm_math.h" 
 
 #ifdef MASTER
-int32_t steer = 0; 												// global variable for steering. -1000 to 1000
-int32_t speed = 0; 												// global variable for speed.    -1000 to 1000
+//int32_t steer = 0; 												// global variable for steering. -1000 to 1000
+//int32_t speed = 0; 												// global variable for speed.    -1000 to 1000
+int32_t leftSpeed = 0;
+int32_t rightSpeed = 0;
 FlagStatus activateWeakening = RESET;			// global variable for weakening
-FlagStatus beepsBackwards = RESET;  			// global variable for beeps backwards
+FlagStatus beepsBackwards = SET;  			// global variable for beeps backwards
 			
 extern uint8_t buzzerFreq;    						// global variable for the buzzer pitch. can be 1, 2, 3, 4, 5, 6, 7...
 extern uint8_t buzzerPattern; 						// global variable for the buzzer pattern. can be 1, 2, 3, 4, 5, 6, 7...
@@ -58,6 +61,7 @@ extern uint8_t buzzerPattern; 						// global variable for the buzzer pattern. c
 extern float batteryVoltage; 							// global variable for battery voltage
 extern float currentDC; 									// global variable for current dc
 extern float realSpeed; 									// global variable for real Speed
+extern uint8_t dir;
 uint8_t slaveError = 0;										// global variable for slave error
 	
 extern FlagStatus timedOut;								// Timeoutvariable set by timeout timer
@@ -270,11 +274,14 @@ int main (void)
 	int8_t index = 8;
   int16_t pwmSlave = 0;
 	int16_t pwmMaster = 0;
-	int16_t scaledSpeed = 0;
-	int16_t scaledSteer  = 0;
-	float expo = 0;
-	float steerAngle = 0;
-	float xScale = 0;
+	float temp_realSpeed = 0;
+	
+	//int16_t scaledSteer  = 0;
+	//int16_t scaledLeftSpeed = 0;
+	//int16_t scaledRightSpeed = 0;
+	//float expo = 0;
+	//float steerAngle = 0;
+	//float xSca'[ppp;le = 0;
 #endif
 	
 	//SystemClock_Config();
@@ -339,24 +346,24 @@ int main (void)
 		steerCounter++;	
 		if ((steerCounter % 2) == 0)
 		{	
-			// Request steering data
+      // Request steering data
 			SendSteerDevice();
 		}
 		
 		// Calculate expo rate for less steering with higher speeds
-		expo = MAP((float)ABS(speed), 0, 1000, 1, 0.5);
+		//expo = MAP((float)ABS(speed), 0, 1000, 1, 0.5);
 		
 	  // Each speedvalue or steervalue between 50 and -50 means absolutely no pwm
 		// -> to get the device calm 'around zero speed'
-		scaledSpeed = speed < 50 && speed > -50 ? 0 : CLAMP(speed, -1000, 1000) * SPEED_COEFFICIENT;
-		scaledSteer = steer < 50 && steer > -50 ? 0 : CLAMP(steer, -1000, 1000) * STEER_COEFFICIENT * expo;
+		//scaledSpeed = speed < 50 && speed > -50 ? 0 : CLAMP(speed, -1000, 1000) * SPEED_COEFFICIENT;
+		//scaledSteer = steer < 50 && steer > -50 ? 0 : CLAMP(steer, -1000, 1000) * STEER_COEFFICIENT * expo;
 		
 		// Map to an angle of 180 degress to 0 degrees for array access (means angle -90 to 90 degrees)
-		steerAngle = MAP((float)scaledSteer, -1000, 1000, 180, 0);
-		xScale = lookUpTableAngle[(uint16_t)steerAngle];
+		//steerAngle = MAP((float)scaledSteer, -1000, 1000, 180, 0);
+		//xScale = lookUpTableAngle[(uint16_t)steerAngle];
 
 		// Mix steering and speed value for right and left speed
-		if(steerAngle >= 90)
+		/**if(steerAngle >= 90)
 		{
 			pwmSlave = CLAMP(scaledSpeed, -1000, 1000);
 			pwmMaster = CLAMP(pwmSlave / xScale, -1000, 1000);
@@ -365,7 +372,23 @@ int main (void)
 		{
 			pwmMaster = CLAMP(scaledSpeed, -1000, 1000);
 			pwmSlave = CLAMP(xScale * pwmMaster, -1000, 1000);
-		}
+		}*/
+		
+		pwmSlave = CLAMP(leftSpeed, -1000, 1000);
+		
+		switch (dir)
+		{
+			case 1:
+				temp_realSpeed = -realSpeed;
+				break;
+			case 2:
+				temp_realSpeed = realSpeed;
+				break;
+			default:
+				temp_realSpeed = 0;
+			break;			
+		}		
+		pwmMaster = CalculatePIDPWM(temp_realSpeed, CLAMP(rightSpeed, -1000, 1000));
 		
 		// Read charge state
 		chargeStateLowActive = gpio_input_bit_get(CHARGE_STATE_PORT, CHARGE_STATE_PIN);
@@ -524,7 +547,7 @@ void ShowBatteryState(uint32_t pin)
 void BeepsBackwards(FlagStatus beepsBackwards)
 {
 	// If the speed is less than -50, beep while driving backwards
-	if (beepsBackwards == SET && speed < -50)
+	if (beepsBackwards == SET && leftSpeed < -50 && rightSpeed < -50)
 	{
 		buzzerFreq = 5;
     buzzerPattern = 4;
