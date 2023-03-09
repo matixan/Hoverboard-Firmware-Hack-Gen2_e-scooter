@@ -1,45 +1,84 @@
-This fork of Hoverboard Firmware Generation 2 for generic hoverboards using two mainboards has the following changes compared to the original firmware:
-````
-- Seperate control of each motor
-- Added PID controllers allowing for each motor to be controlled using a real speed instead of a power level (P, I and D gains still have to be tweaked better, power buildup at lower speeds is pretty slow)
-- All important data is now send to the steering devices (battery voltage, master and slave current and master and slave realSpeed)
-````
+### Update 2.x:
+- This is a fork from https://github.com/krisstakos/Hoverboard-Firmware-Hack-Gen2.1
+- with different defines_2-x.h for two different board layouts :-) 
+- Simply choose ` #define LAYOUT_2_0 ` or ` #define LAYOUT_2_1 ` in ` Inc/config.h ` :-))
+- as only UART control is supported you can download compiled binaries [here](HoverBoardGigaDevice/ReadyToFlash/) or there: [pionierland.de/hoverhack/gen2/ReadyToFlash](https://pionierland.de/hoverhack/gen2/ReadyToFlash/) (the test-firmwares will ignore uart speed and will repeat speed from -300 to 300 instead)
+- Make sure your board is one of the supported layouts ! **Wrong pin assignments can shortcut the battery and kill the mosfets !!**
 
-To control the hoverboard drivers, a development board, like for example an Arduino (3.3V logic levels!!!) has to be connected to the master controller using a UART port. It's recommended to have a board with multiple UART ports like for example the Arduino Due (connected directly) or Arduino Mega (using logic level converters). Check out the reversed-engineered schematics for "REMOTE" down below. The overview of all communications can be found in `CommunicationOverview.ods`. The function for generating the 16 bit CRC check can be found in `HoverBoardGigaDevice/src/comms.c`. The typedef `FLOATUNION_t` in C for converting seperate float bytes to a float variable can be found in `HoverBoardGigaDevice/inc/defines.h`. 
 
-Data can be read out either by using the master controller or the slave controller. When using the master controller, 24 bytes of data containing the battery voltage and master and slave speeds and currents can just be read out. Each value is in a float format split up into 4 bytes. This can be converted using the `FLOATUNION_t` typedef. When using the slave controller, data first has to be requested before it is send. It is also possible to change certain settings on the hoverboard controllers like for example enabling or disabling the beeping when driving backwards. To read out data you have to set the readWrite field to '0' and to change settings you have to set it to '1'. Notice that for every data send in the slave controller you have to use ASCII character instead of real numbers. You can chose which data has to send back or which value in the hoverboard has to be changed by sending the correct identifier. The list with the correct identifiers can be found for reading in the first switch statement and for writing in the second switch statement in the source file `HoverBoardGigaDevice/src/commsBluetooth.c`. 
+#### Update 2.1:
+- That's a fork from https://github.com/flo199213/Hoverboard-Firmware-Hack-Gen2
+- Compiles with Keil version 6 :-))
 
-All communications happen using a baudrate of 19200. The main controller has to receive data at least every 2000 milliseconds before it emergency shuts off. 
+---
 
-__________________________________________
+#### version/layout 2.0:
+![layout 2.0](https://raw.githubusercontent.com/RoboDurden/Hoverboard-Firmware-Hack-Gen2.x/main/Overview_2-0.jpg)
+- [pin configuration](pins_2.0.md)
+- [details](Schematics_2.0/)
 
-### Hoverboard-Firmware-Hack-Gen2
 
-Hoverboard Hack Firmware Generation 2 for the Hoverboard with the two Mainboards instead of the Sensorboards (See Pictures).
+#### version/layout 2.1:
+![layout 2.1](https://raw.githubusercontent.com/RoboDurden/Hoverboard-Firmware-Hack-Gen2.x/main/Overview_2-1.jpg)
+
+
+#### todo: version/layout 2.2:
+![layout 2.2](https://raw.githubusercontent.com/RoboDurden/Hoverboard-Firmware-Hack-Gen2.x/main/Overview_2-2.jpg)
+- [details](Schematics_2.2/)
+- [how to unlock..](https://github.com/JRomainG/GD32F130K6-hoverboard-hack)
+
+
+#### todo: version/layout 2.3:
+![layout 2.3](https://raw.githubusercontent.com/RoboDurden/Hoverboard-Firmware-Hack-Gen2.x/main/Overview_2-3.jpg)
+- [details](Schematics_2.3/)
+
+
+#### todo: version/layout 2.4:
+![layout 2.4](https://raw.githubusercontent.com/RoboDurden/Hoverboard-Firmware-Hack-Gen2.x/main/Overview_2-4.jpg)
+- [details](Schematics_2.4/)
+- [issue](https://github.com/RoboDurden/Hoverboard-Firmware-Hack-Gen2.x/issues/3)
+
+---
+
+### Hoverboard-Firmware-Hack-Gen2.x
+
+Hoverboard Hack Firmware Generation 2.x for the Hoverboard with the two Mainboards instead of the Sensorboards (See Pictures).
 
 This repo contains open source firmware for generic Hoverboards with two mainboards. It allows you to control the hardware of the new version of hoverboards (like the Mainboard, Motors and Battery) with an arduino or some other steering device for projects like driving armchairs.
 
-The structure of the firmware is based on the firmware hack of Niklas Fauth (https://github.com/NiklasFauth/hoverboard-firmware-hack/). Because of a different model of processor (GD32F130C8 instead of STM32F103) it was not possible to use the same firmware and it has to be written from scratch (Different hardware, different, pins, different registers :( )
+The structure of the firmware is based on the firmware hack of Niklas Fauth (https://github.com/NiklasFauth/hoverboard-firmware-hack/). These "new" boards are using GD32F130C6, so the project is adapted to that ic
 
-- This project requires knowledge of the initial project linked above.
-- At the current point I am not able to support any questions or issues - sorry!
+- It's required to install [Keil](https://www.keil.com/download/product/).
 
 ---
 
 #### Hardware
-![otter](https://github.com/flo199213/Hoverboard-Firmware-Hack-Gen2/blob/master/Hardware_Overview_small.png)
 
-The hardware has two main boards, which are different equipped. They are connected via USART. Additionally there are some LED PCB connected at X1 and X2 which signalize the battery state and the error state. There is an programming connector for ST-Link/V2 and they break out GND, USART/I2C, 5V on a second pinhead.
+The hardware has two main boards, which are identical equipped. They are connected via USART. Additionally there are some LED PCB connected at LED1(battery indicator) and LED2(auxiliry lights). There is an programming connector for ST-Link/V2 and they break out GND, USART/I2C, 5V on a second pinhead(look at the picture).
 
-The reverse-engineered schematics of the mainboards can be found here:
-https://github.com/flo199213/Hoverboard-Firmware-Hack-Gen2/blob/master/Schematics/HoverBoard_CoolAndFun.pdf
+The reverse-engineered schematics of the mainboards can be found here(GEN 2):
+https://github.com/krisstakos/Hoverboard-Firmware-Hack-Gen2.1/blob/main/Schematics/HoverBoard_CoolAndFun.pdf
 
 
 ---
 
 #### Flashing
-The firmware is built with Keil (free up to 32KByte). To build the firmware, open the Keil project file which is includes in repository. Right to the STM32, there is a debugging header with GND, 3V3, SWDIO and SWCLK. Connect GND, SWDIO and SWCLK to your SWD programmer, like the ST-Link found on many STM devboards.
+The firmware is built with Keil (free up to 32KByte). To build the firmware, open the Keil project file which is includes in repository. Right to the STM32, there is a debugging header with GND, 3V3, SWDIO and SWCLK. 
+**Beware that some verions/layouts have  GND, SWDIO, SWCLK, 3V3 header !** So always check GND and the 3.3V pins with a multimeter, with DIO and CLK simply try and error :-)
+Connect GND, SWDIO and SWCLK to your SWD programmer, like the ST-Link found on many STM devboards.
 
-- If you never flashed your mainboard before, the controller is locked. To unlock the flash, use STM32 ST-LINK Utility or openOCD.
-- To flash the STM32, use the STM32 ST-LINK Utility as well, ST-Flash utility or Keil by itself.
+- If you never flashed your mainboard before, the controller is locked. To unlock the flash, use STM32 ST-LINK Utility or openOCD. [instructions here](https://github.com/EFeru/hoverboard-firmware-hack-FOC/wiki/How-to-Unlock-MCU-flash).
+ST-Link-Utility is out of date and needs a few old mfc42.dll files! Please open an issue when you know how to unlock flash with the STM32CubeProgrammer.
+- To flash the STM32, use the STM32 ST-LINK Utility (2023: STM32CubeProgrammer) as well, ST-Flash utility or Keil by itself. I was also having 100% success rate with platform.io project from [here](https://github.com/EFeru/hoverboard-sideboard-hack-GD) just for uploading. You have to rename the output file *.axf to **firmware.elf** and move/copy it to the platform.io project, then upload. 
+Bonus: Kristian Kosev (krisstakos) has  included **rename.bat** which will rename and move your output file, but you have to specify the right paths.
 - Hold the powerbutton while flashing the firmware, as the controller releases the power latch and switches itself off during flashing
+- If Flashing with Keil using a ST-Link dongle crashes, download a fixed dll here: https://developer.arm.com/documentation/ka005381/latest
+- ST-Link_Utility and Stm32CubeProgrammer seem to have problems to programm the GD32F130. Try ` st-flash write hoverboard.bin 0x8000000 ` with this open source utility: https://github.com/stlink-org/stlink/releases (ordinary Windows 10 64 bit: x86_64-w64-mingw32.zip )
+
+---
+
+#### Arduino IDE examples
+
+![screenshot ](Arduino%20Examples/screenshot_TestSpeed.jpg)
+- [download code here](Arduino%20Examples/)
+

@@ -30,8 +30,8 @@
 
 #include "gd32f1x0.h"
 #include "../Inc/setup.h"
-#include "../Inc/defines.h"
 #include "../Inc/config.h"
+#include "../Inc/defines.h"
 #include "../Inc/it.h"
 
 #define TIMEOUT_FREQ  1000
@@ -150,8 +150,8 @@ void GPIO_init(void)
 	gpio_output_options_set(LOWER_LED_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_10MHZ, LOWER_LED_PIN);
 	
 	// Init mosfet output
-	gpio_mode_set(MOSFET_OUT_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, MOSFET_OUT_PIN);	
-	gpio_output_options_set(MOSFET_OUT_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, MOSFET_OUT_PIN);
+	//gpio_mode_set(MOSFET_OUT_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, MOSFET_OUT_PIN);	
+	//gpio_output_options_set(MOSFET_OUT_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, MOSFET_OUT_PIN);
 	
 	// Init HAL input
 	gpio_mode_set(HALL_A_PORT , GPIO_MODE_INPUT, GPIO_PUPD_NONE, HALL_A_PIN);
@@ -171,11 +171,7 @@ void GPIO_init(void)
 	gpio_mode_set(CURRENT_DC_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, CURRENT_DC_PIN);
 	gpio_mode_set(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO_PIN_6);
 	gpio_mode_set(GPIOB, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO_PIN_0);
-	
-	// Init debug pin
-	gpio_mode_set(DEBUG_PORT , GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, DEBUG_PIN);	
-	gpio_output_options_set(DEBUG_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, DEBUG_PIN);
-	
+		
 	// Init emergency shutdown pin
 	gpio_mode_set(TIMER_BLDC_EMERGENCY_SHUTDOWN_PORT , GPIO_MODE_AF, GPIO_PUPD_NONE, TIMER_BLDC_EMERGENCY_SHUTDOWN_PIN);
 	gpio_af_set(TIMER_BLDC_EMERGENCY_SHUTDOWN_PORT, GPIO_AF_2, TIMER_BLDC_EMERGENCY_SHUTDOWN_PIN);
@@ -340,7 +336,7 @@ void ADC_init(void)
 	dma_init_struct_adc.periph_inc = DMA_PERIPH_INCREASE_DISABLE;
 	dma_init_struct_adc.periph_width = DMA_PERIPHERAL_WIDTH_16BIT;
 	dma_init_struct_adc.priority = DMA_PRIORITY_ULTRA_HIGH;
-	dma_init(DMA_CH0, dma_init_struct_adc);
+	dma_init(DMA_CH0, &dma_init_struct_adc);
 	
 	// Configure DMA mode
 	dma_circulation_enable(DMA_CH0);
@@ -362,7 +358,7 @@ void ADC_init(void)
 	
 	// Set trigger of ADC
 	adc_external_trigger_config(ADC_REGULAR_CHANNEL, ENABLE);
-	adc_external_trigger_source_config(ADC_REGULAR_CHANNEL, ADC_EXTTRIG_REGULAR_SWRCST);
+	adc_external_trigger_source_config(ADC_REGULAR_CHANNEL, ADC_EXTTRIG_REGULAR_NONE);
 	
 	// Disable the temperature sensor, Vrefint and vbat channel
 	adc_tempsensor_vrefint_disable();
@@ -421,7 +417,7 @@ void USART_MasterSlave_init(void)
 	dma_init_struct_usart.periph_inc = DMA_PERIPH_INCREASE_DISABLE;
 	dma_init_struct_usart.periph_width = DMA_PERIPHERAL_WIDTH_8BIT;
 	dma_init_struct_usart.priority = DMA_PRIORITY_ULTRA_HIGH;
-	dma_init(DMA_CH4, dma_init_struct_usart);
+	dma_init(DMA_CH4, &dma_init_struct_usart);
 	
 	// Configure DMA mode
 	dma_circulation_enable(DMA_CH4);
@@ -477,7 +473,7 @@ void USART_Steer_COM_init(void)
 	dma_init_struct_usart.periph_inc = DMA_PERIPH_INCREASE_DISABLE;
 	dma_init_struct_usart.periph_width = DMA_PERIPHERAL_WIDTH_8BIT;
 	dma_init_struct_usart.priority = DMA_PRIORITY_ULTRA_HIGH;
-	dma_init(DMA_CH2, dma_init_struct_usart);
+	dma_init(DMA_CH2, &dma_init_struct_usart);
 	
 	// Configure DMA mode
 	dma_circulation_enable(DMA_CH2);
