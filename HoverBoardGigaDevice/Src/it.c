@@ -30,8 +30,8 @@
 
 #include "gd32f1x0.h"
 #include "../Inc/it.h"
-#include "../Inc/defines.h"
 #include "../Inc/config.h"
+#include "../Inc/defines.h"
 #include "../Inc/bldc.h"
 #include "../Inc/led.h"
 #include "../Inc/commsMasterSlave.h"
@@ -46,10 +46,8 @@ FlagStatus timedOut = SET;
 uint32_t hornCounter_ms = 0;
 #endif
 
-//extern int32_t steer;
-//extern int32_t speed;
-extern int32_t leftSpeed;
-extern int32_t rightSpeed;
+extern int32_t steer;
+extern int32_t speed;
 extern FlagStatus activateWeakening;
 extern FlagStatus beepsBackwards;
 
@@ -82,8 +80,8 @@ void TIMER13_IRQHandler(void)
 		if (timedOut == RESET)
 		{
 #ifdef MASTER
-			leftSpeed = 0;
-			rightSpeed = 0;
+			steer = 0;
+			speed = 0;
 			beepsBackwards = RESET;
 #endif
 #ifdef SLAVE

@@ -34,9 +34,26 @@
 #include "gd32f1x0.h"
 
 // ################################################################################
+// select one of the supported circuit boards and whether to compile the slave- or master board
+// only the master has a buzzer :-)
 
-//#define MASTER										  	// Select if firmware is for master or slave board
-#define SLAVE 												// Select if firmware is for master or slave board
+// LAYOUT_2_X is used in defines.h
+#define LAYOUT_2_0	// https://github.com/flo199213/Hoverboard-Firmware-Hack-Gen2
+//#define LAYOUT_2_1	// https://github.com/krisstakos/Hoverboard-Firmware-Hack-Gen2.1
+
+
+#define MASTER		// Select if firmware is for master or slave board
+	// if left uncommented = '//#define MASTER' , then SLAVE is defined at the end of this config.h :-)
+
+
+#ifdef MASTER
+	#define SPEED_COEFFICIENT   -1
+	#define STEER_COEFFICIENT   1
+	
+	//#define TEST_SPEED	// will discard uart input and repeat speed from -300 to 300 instead
+#else
+	#define SLAVE 												// Select if firmware is for master or slave board
+#endif
 
 // ################################################################################
 
@@ -56,6 +73,17 @@
 
 // ################################################################################
 
+
+#define BAT_CELLS         10        // battery number of cells. Normal Hoverboard battery: 10s
+#define CELL_LOW_LVL1     3.5       // Gently beeps, show green battery symbol above this Level.
+#define CELL_LOW_LVL2     3.3       // Battery almost empty, show orange battery symbol above this Level. Charge now! 
+#define CELL_LOW_DEAD     3.1       // Undervoltage lockout, show red battery symbol above this Level.
+
+#define BAT_LOW_LVL1     BAT_CELLS * CELL_LOW_LVL1
+#define BAT_LOW_LVL2     BAT_CELLS * CELL_LOW_LVL2
+#define BAT_LOW_DEAD     BAT_CELLS * CELL_LOW_DEAD
+
+/*
 #define BAT_LOW_LVL1     35.0       // Gently beeps, show green battery symbol above this Level.
 #define BAT_LOW_LVL2     33.0       // Battery almost empty, show orange battery symbol above this Level. Charge now! 
 #define BAT_LOW_DEAD     31.0       // Undervoltage lockout, show red battery symbol above this Level.
@@ -63,6 +91,7 @@
 //#define BAT_LOW_LVL1     29.0
 //#define BAT_LOW_LVL2     28.0
 //#define BAT_LOW_DEAD     27.0
+*/
 
 // ################################################################################
 #endif
@@ -70,9 +99,5 @@
 // ###### ARMCHAIR ######
 #define FILTER_SHIFT 12 						// Low-pass filter for pwm, rank k=12
 
-#ifdef MASTER
-#define SPEED_COEFFICIENT   -1
-#define STEER_COEFFICIENT   1
-#endif
 
 #endif
